@@ -29,11 +29,6 @@ A high-performance Spring Boot application that provides accurate sunrise and su
    ```
 
 2. **Configuration**
-   Copy the example configuration and update with your details:
-   ```bash
-   cp src/main/resources/application.example.yml src/main/resources/application.yml
-   ```
-   
    Update the following in `application.yml`:
    - `geocoding.user-agent`: Your application name and contact email
    - `openrouter.api.key`: Your OpenRouter API key (or set as `OPENROUTER_API_KEY` environment variable)
@@ -47,16 +42,16 @@ A high-performance Spring Boot application that provides accurate sunrise and su
    mvn spring-boot:run
    ```
    
-   The application will be available at `http://localhost:8083`
+   The application will be available at `http://localhost:8080`
 
 4. **Verify Installation**
-   Visit the Swagger UI at `http://localhost:8083/swagger-ui.html` to explore the API documentation.
+   Visit the Swagger UI at `http://localhost:8080/swagger-ui.html` to explore the API documentation.
 
 ## 📡 API Documentation
 
 ### Interactive Documentation
-- **Swagger UI**: `http://localhost:8083/swagger-ui.html`
-- **OpenAPI JSON**: `http://localhost:8083/v3/api-docs`
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
 
 ### Available Endpoints
 
@@ -132,16 +127,3 @@ For detailed information about the application architecture and data flow, see:
 - [Architecture Overview](docs/ARCHITECTURE.md)
 - [Process Flow](docs/PROCESS_FLOW.md)
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- OpenMeteo for free weather API
-- OpenStreetMap/Nominatim for geocoding
-- OpenRouter for AI model access
