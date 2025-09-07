@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SunForecastController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sunrise-sunset-forecast</a> &gt; <a href="index.source.html" class="el_package">com.example.sunrisesunsetforecast.controller</a> &gt; <span class="el_source">SunForecastController.java</span></div><h1>SunForecastController.java</h1><pre class="source lang-java linenums">package com.example.sunrisesunsetforecast.controller;
+
+import com.example.sunrisesunsetforecast.dto.SunForecastResponse;
+import com.example.sunrisesunsetforecast.service.SunForecastService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+@Tag(name = &quot;Sun Forecast&quot;, description = &quot;APIs for getting sunrise and sunset information&quot;)
+@RestController
+@RequestMapping(&quot;/api/sun-forecast&quot;)
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+@Validated
+public class SunForecastController {
+
+    private final SunForecastService sunForecastService;
+
+    @Operation(
+        summary = &quot;Get sunrise and sunset forecast for a city&quot;,
+        description = &quot;Returns sunrise and sunset times along with an AI-generated description for the specified city&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;Successfully retrieved forecast&quot;,
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = SunForecastResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;Invalid city name provided&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;City not found&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;500&quot;,
+            description = &quot;Internal server error&quot;,
+            content = @Content
+        )
+    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity&lt;SunForecastResponse&gt; getSunForecast(
+            @Parameter(
+                name = &quot;city&quot;,
+                description = &quot;Name of the city to get forecast for&quot;,
+                required = true,
+                example = &quot;London&quot;
+            )
+            @RequestParam(&quot;city&quot;) 
+            @NotBlank(message = &quot;City name is required&quot;) 
+            @Pattern(regexp = &quot;^[a-zA-Z\\s-]+&quot;, message = &quot;City name must contain only letters, spaces, and hyphens&quot;)
+            String city) {
+        
+<span class="fc" id="L71">        return ResponseEntity.ok(sunForecastService.getSunForecast(city));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

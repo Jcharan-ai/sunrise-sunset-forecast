@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SunForecastServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sunrise-sunset-forecast</a> &gt; <a href="index.source.html" class="el_package">com.example.sunrisesunsetforecast.service.impl</a> &gt; <span class="el_source">SunForecastServiceImpl.java</span></div><h1>SunForecastServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.sunrisesunsetforecast.service.impl;
+
+import com.example.sunrisesunsetforecast.client.OpenMeteoClient;
+import com.example.sunrisesunsetforecast.client.dto.OpenMeteoResponse;
+import com.example.sunrisesunsetforecast.dto.SunForecastResponse;
+import com.example.sunrisesunsetforecast.exception.ExternalServiceException;
+import com.example.sunrisesunsetforecast.model.Coordinates;
+import com.example.sunrisesunsetforecast.service.ForecastDescriptionService;
+import com.example.sunrisesunsetforecast.service.GeocodingService;
+import com.example.sunrisesunsetforecast.service.SunForecastService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+
+<span class="fc" id="L21">@Slf4j</span>
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+public class SunForecastServiceImpl implements SunForecastService {
+
+<span class="fc" id="L26">    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;);</span>
+    private final OpenMeteoClient openMeteoClient;
+    private final ForecastDescriptionService forecastDescriptionService;
+    private final org.springframework.cache.CacheManager cacheManager;
+    private final GeocodingService geocodingService;
+
+    @Override
+    @Cacheable(value = &quot;sunForecast&quot;, key = &quot;#city.toLowerCase()&quot;)
+    public SunForecastResponse getSunForecast(String city) {
+<span class="fc" id="L35">        log.info(&quot;Fetching sun forecast for city: {}&quot;, city);</span>
+        
+        try {
+<span class="fc" id="L38">            log.info(&quot;1. About to call OpenMeteoClient.getSunForecast for city: {}&quot;, city);</span>
+            
+            // Debug: Log the openMeteoClient object
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">            log.info(&quot;1.1. OpenMeteoClient class: {}&quot;, openMeteoClient != null ? openMeteoClient.getClass().getName() : &quot;NULL&quot;);</span>
+            
+            // Get coordinates for the city
+<span class="fc" id="L44">            Coordinates coords = geocodingService.getCoordinates(city);</span>
+<span class="fc" id="L45">            log.info(&quot;1.2. Got coordinates for {}: {},{}&quot;, city, </span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                    coords != null ? coords.getLatitude() : &quot;null&quot;, </span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                    coords != null ? coords.getLongitude() : &quot;null&quot;);</span>
+            
+<span class="fc" id="L49">            com.example.sunrisesunsetforecast.client.dto.OpenMeteoResponse forecast = openMeteoClient.getSunForecast(city);</span>
+            
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            log.info(&quot;2. Received forecast object: {}&quot;, forecast != null ? &quot;not null&quot; : &quot;null&quot;);</span>
+            
+<span class="fc bfc" id="L53" title="All 2 branches covered.">            if (forecast == null) {</span>
+<span class="fc" id="L54">                log.error(&quot;3. Forecast is null - no data returned from client for city: {}&quot;, city);</span>
+<span class="fc" id="L55">                log.error(&quot;3.1. OpenMeteoClient instance: {}&quot;, openMeteoClient);</span>
+<span class="fc" id="L56">                log.error(&quot;3.2. Geocoding service returned: {}&quot;, coords);</span>
+<span class="fc" id="L57">                throw new ExternalServiceException(&quot;No forecast data available for the specified location&quot;);</span>
+            }
+            
+<span class="fc" id="L60">            log.info(&quot;4. Forecast class: {}&quot;, forecast.getClass().getName());</span>
+<span class="fc" id="L61">            log.info(&quot;5. Forecast toString(): {}&quot;, forecast);</span>
+<span class="fc" id="L62">            log.info(&quot;6. Forecast latitude: {}, longitude: {}&quot;, forecast.getLatitude(), forecast.getLongitude());</span>
+            
+<span class="fc" id="L64">            OpenMeteoResponse.Daily daily = forecast.getDaily();</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            log.info(&quot;7. Daily object: {}&quot;, daily != null ? &quot;not null&quot; : &quot;null&quot;);</span>
+            
+<span class="fc bfc" id="L67" title="All 2 branches covered.">            if (daily == null) {</span>
+<span class="fc" id="L68">                log.error(&quot;8. Daily forecast is null - check mock response in test&quot;);</span>
+<span class="fc" id="L69">                log.debug(&quot;9. Forecast object fields: {}&quot;, Arrays.toString(forecast.getClass().getDeclaredFields()));</span>
+<span class="fc" id="L70">                throw new ExternalServiceException(&quot;No daily forecast data available&quot;);</span>
+            }
+            
+            // Log all fields of the Daily object
+<span class="fc" id="L74">            log.info(&quot;10. Daily object class: {}&quot;, daily.getClass().getName());</span>
+<span class="fc" id="L75">            log.info(&quot;11. Daily object fields: {}&quot;, Arrays.toString(daily.getClass().getDeclaredFields()));</span>
+            
+            // Log all available data from the Daily object
+            try {
+<span class="fc" id="L79">                log.info(&quot;12. Time list: {}&quot;, daily.getTime());</span>
+<span class="fc" id="L80">                log.info(&quot;13. Sunrise times: {}&quot;, daily.getSunriseTimes());</span>
+<span class="fc" id="L81">                log.info(&quot;14. Sunset times: {}&quot;, daily.getSunsetTimes());</span>
+<span class="fc" id="L82">                log.info(&quot;15. Temperature max: {}&quot;, daily.getTemperature2mMax());</span>
+<span class="fc" id="L83">                log.info(&quot;16. Weather codes: {}&quot;, daily.getWeatherCode());</span>
+<span class="nc" id="L84">            } catch (Exception e) {</span>
+<span class="nc" id="L85">                log.error(&quot;17. Error accessing Daily object fields: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L86">            }</span>
+            
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">            if (daily.getSunriseTimes() == null) {</span>
+<span class="nc" id="L89">                log.error(&quot;18. Sunrise times are null - check mock response in test&quot;);</span>
+<span class="nc" id="L90">                throw new ExternalServiceException(&quot;No sunrise times available&quot;);</span>
+            }
+            
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">            if (daily.getSunriseTimes().isEmpty()) {</span>
+<span class="nc" id="L94">                log.error(&quot;19. Sunrise times list is empty - check mock response in test&quot;);</span>
+<span class="nc" id="L95">                log.debug(&quot;20. Daily object state: {}&quot;, daily);</span>
+<span class="nc" id="L96">                throw new ExternalServiceException(&quot;No sunrise times available&quot;);</span>
+            }
+            
+            // Get the first day's forecast (index 0 for tomorrow)
+<span class="fc" id="L100">            String sunriseTime = forecast.getDaily().getSunriseTimes().get(0);</span>
+<span class="fc" id="L101">            String sunsetTime = forecast.getDaily().getSunsetTimes().get(0);</span>
+            
+            // Parse the timestamps, handling both with and without timezone
+<span class="fc" id="L104">            LocalDateTime sunriseLocal = parseDateTime(sunriseTime);</span>
+<span class="fc" id="L105">            LocalDateTime sunsetLocal = parseDateTime(sunsetTime);</span>
+            
+            // Format times for the AI enhancement
+<span class="fc" id="L108">            String formattedSunrise = sunriseLocal.format(TIME_FORMAT);</span>
+<span class="fc" id="L109">            String formattedSunset = sunsetLocal.format(TIME_FORMAT);</span>
+            
+            // Get temperature and weather condition (if available)
+<span class="pc bpc" id="L112" title="2 of 4 branches missed.">            Double temperature = forecast.getDaily() != null &amp;&amp; forecast.getDaily().getTemperature2mMax() != null &amp;&amp; </span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">                              !forecast.getDaily().getTemperature2mMax().isEmpty() ?</span>
+<span class="pc" id="L114">                              forecast.getDaily().getTemperature2mMax().get(0) : null;</span>
+            
+<span class="fc" id="L116">            String weatherCondition = &quot;Clear&quot;; // Default value if not available</span>
+<span class="pc bpc" id="L117" title="2 of 4 branches missed.">            if (forecast.getDaily() != null &amp;&amp; forecast.getDaily().getWeatherCode() != null &amp;&amp; </span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">                !forecast.getDaily().getWeatherCode().isEmpty()) {</span>
+<span class="fc" id="L119">                weatherCondition = mapWeatherCode(forecast.getDaily().getWeatherCode().get(0));</span>
+            }
+            
+            // Convert to OffsetDateTime for the response
+<span class="fc" id="L123">            OffsetDateTime sunrise = sunriseLocal.atZone(ZoneId.systemDefault()).toOffsetDateTime();</span>
+<span class="fc" id="L124">            OffsetDateTime sunset = sunsetLocal.atZone(ZoneId.systemDefault()).toOffsetDateTime();</span>
+            
+            // Generate enhanced message using AI
+<span class="fc" id="L127">            String enhancedMessage = forecastDescriptionService.generateForecastDescription(</span>
+                city,
+<span class="fc" id="L129">                LocalDate.now().plusDays(1), // Tomorrow's date</span>
+<span class="fc" id="L130">                LocalTime.parse(formattedSunrise),</span>
+<span class="fc" id="L131">                LocalTime.parse(formattedSunset),</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">                temperature != null ? temperature : 20.0, // Default to 20°C if not available</span>
+                weatherCondition
+            );
+            
+<span class="fc" id="L136">            return SunForecastResponse.builder()</span>
+<span class="fc" id="L137">                .city(city)</span>
+<span class="fc" id="L138">                .sunrise(sunrise)</span>
+<span class="fc" id="L139">                .sunset(sunset)</span>
+<span class="fc" id="L140">                .enhancedMessage(enhancedMessage)</span>
+<span class="fc" id="L141">                .temperature(temperature)</span>
+<span class="fc" id="L142">                .weatherCondition(weatherCondition)</span>
+<span class="fc" id="L143">                .build();</span>
+                
+<span class="fc" id="L145">        } catch (Exception e) {</span>
+<span class="fc" id="L146">            log.error(&quot;Error fetching sun forecast for city: &quot; + city, e);</span>
+<span class="fc" id="L147">            throw new ExternalServiceException(&quot;Error fetching sun forecast: &quot; + e.getMessage(), e);</span>
+        }
+    }
+    
+    /**
+     * Maps OpenMeteo weather code to a human-readable weather condition.
+     * Reference: https://open-meteo.com/en/docs#api_form
+     */
+    /**
+     * Parses a date-time string that may or may not include timezone information.
+     * Handles both ISO_OFFSET_DATE_TIME (with timezone) and ISO_LOCAL_DATE_TIME (without timezone) formats.
+     * 
+     * @param dateTimeStr the date-time string to parse
+     * @return LocalDateTime in the system default timezone
+     */
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        try {
+            // First try to parse with timezone (e.g., &quot;2023-01-01T09:00:00Z&quot;)
+<span class="nc" id="L165">            return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME)</span>
+<span class="nc" id="L166">                              .atZoneSameInstant(ZoneId.systemDefault())</span>
+<span class="nc" id="L167">                              .toLocalDateTime();</span>
+<span class="fc" id="L168">        } catch (DateTimeParseException e) {</span>
+            try {
+                // If that fails, try without timezone (e.g., &quot;2023-01-01T09:00:00&quot;)
+<span class="fc" id="L171">                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);</span>
+<span class="nc" id="L172">            } catch (DateTimeParseException ex) {</span>
+<span class="nc" id="L173">                throw new ExternalServiceException(&quot;Invalid date format: &quot; + dateTimeStr, ex);</span>
+            }
+        }
+    }
+    
+    private String mapWeatherCode(int code) {
+<span class="pc bpc" id="L179" title="12 of 13 branches missed.">        return switch (code) {</span>
+<span class="fc" id="L180">            case 0 -&gt; &quot;Clear&quot;;</span>
+<span class="nc" id="L181">            case 1, 2, 3 -&gt; &quot;Partly Cloudy&quot;;</span>
+<span class="nc" id="L182">            case 45, 48 -&gt; &quot;Foggy&quot;;</span>
+<span class="nc" id="L183">            case 51, 53, 55 -&gt; &quot;Drizzle&quot;;</span>
+<span class="nc" id="L184">            case 56, 57 -&gt; &quot;Freezing Drizzle&quot;;</span>
+<span class="nc" id="L185">            case 61, 63, 65 -&gt; &quot;Rain&quot;;</span>
+<span class="nc" id="L186">            case 66, 67 -&gt; &quot;Freezing Rain&quot;;</span>
+<span class="nc" id="L187">            case 71, 73, 75 -&gt; &quot;Snow&quot;;</span>
+<span class="nc" id="L188">            case 77 -&gt; &quot;Snow Grains&quot;;</span>
+<span class="nc" id="L189">            case 80, 81, 82 -&gt; &quot;Rain Showers&quot;;</span>
+<span class="nc" id="L190">            case 85, 86 -&gt; &quot;Snow Showers&quot;;</span>
+<span class="nc" id="L191">            case 95, 96, 99 -&gt; &quot;Thunderstorm&quot;;</span>
+<span class="nc" id="L192">            default -&gt; &quot;Unknown&quot;;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

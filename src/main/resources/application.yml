@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sunrise-sunset-forecast
+  
+  # Cache configuration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
+
+  # WebClient configuration
+  webclient:
+    timeout: 5000
+
+# API Keys Configuration
+openrouter:
+  api:
+    key: ${OPENROUTER_API_KEY:<OPENROUTER_API_KEY>}  # OpenRouter API key
+    model: openai/gpt-oss-20b:free  # Using openai model via OpenRouter
+
+# Open-Meteo API configuration
+openmeteo:
+  api:
+    base-url: https://api.open-meteo.com/v1/forecast
+
+# Geocoding service configuration
+geocoding:
+  user-agent: SunriseSunsetForecast/1.0 (<yourmailid>@gmail.com)  # Please replace with your email for Nominatim
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.example.sunrisesunsetforecast: DEBUG
+    org.springframework.web: INFO
+    reactor.netty: WARN
+  file:
+    name: ${user.dir}/logs/sunrise-sunset-forecast.log
+    max-history: 30
+    max-size: 10MB
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Swagger/OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    doc-expansion: none
+  show-actuator: true

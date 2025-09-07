@@ -1,0 +1,8 @@
+com\example\sunrisesunsetforecast\config\TestCacheConfig.class
+com\example\sunrisesunsetforecast\controller\SunForecastControllerTest.class
+com\example\sunrisesunsetforecast\config\TestWebClientConfig.class
+com\example\sunrisesunsetforecast\service\impl\SunForecastServiceImplHelperTest.class
+com\example\sunrisesunsetforecast\service\impl\SunForecastServiceImplTest.class
+com\example\sunrisesunsetforecast\client\OpenMeteoClientTest.class
+com\example\sunrisesunsetforecast\service\impl\MakeDailyHelperTest.class
+com\example\sunrisesunsetforecast\service\impl\NominatimGeocodingServiceTest.class

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenMeteoClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sunrise-sunset-forecast</a> &gt; <a href="index.source.html" class="el_package">com.example.sunrisesunsetforecast.client</a> &gt; <span class="el_source">OpenMeteoClient.java</span></div><h1>OpenMeteoClient.java</h1><pre class="source lang-java linenums">package com.example.sunrisesunsetforecast.client;
+
+import com.example.sunrisesunsetforecast.client.dto.OpenMeteoResponse;
+import com.example.sunrisesunsetforecast.exception.ExternalServiceException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
+
+import java.net.URI;
+import com.example.sunrisesunsetforecast.service.GeocodingService;
+import com.example.sunrisesunsetforecast.model.Coordinates;
+
+<span class="fc" id="L18">@Slf4j</span>
+@Component
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+public class OpenMeteoClient {
+
+    @Value(&quot;${openmeteo.api.base-url}&quot;)
+    private String baseUrl;
+
+    private final WebClient webClient;
+    private final GeocodingService geocodingService;
+
+    @Cacheable(value = &quot;openMeteoForecast&quot;, key = &quot;#city.toLowerCase()&quot;)
+    public OpenMeteoResponse getSunForecast(String city) {
+<span class="fc" id="L31">        log.info(&quot;Fetching coordinates for city: {}&quot;, city);</span>
+        
+        try {
+            // First, get coordinates for the city
+<span class="fc" id="L35">            Coordinates coordinates = geocodingService.getCoordinates(city);</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">            if (coordinates == null) {</span>
+<span class="nc" id="L37">                throw new ExternalServiceException(&quot;Could not find coordinates for city: &quot; + city);</span>
+            }
+
+            // Build the URI with query parameters
+<span class="fc" id="L41">            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)</span>
+<span class="fc" id="L42">                    .queryParam(&quot;latitude&quot;, coordinates.getLatitude())</span>
+<span class="fc" id="L43">                    .queryParam(&quot;longitude&quot;, coordinates.getLongitude())</span>
+<span class="fc" id="L44">                    .queryParam(&quot;daily&quot;, &quot;sunrise,sunset,temperature_2m_max,weathercode&quot;)</span>
+<span class="fc" id="L45">                    .queryParam(&quot;timezone&quot;, &quot;auto&quot;)</span>
+<span class="fc" id="L46">                    .queryParam(&quot;forecast_days&quot;, 1) // We only need tomorrow's forecast</span>
+<span class="fc" id="L47">                    .queryParam(&quot;temperature_unit&quot;, &quot;celsius&quot;)</span>
+<span class="fc" id="L48">                    .queryParam(&quot;windspeed_unit&quot;, &quot;kmh&quot;)</span>
+<span class="fc" id="L49">                    .queryParam(&quot;precipitation_unit&quot;, &quot;mm&quot;)</span>
+<span class="fc" id="L50">                    .build()</span>
+<span class="fc" id="L51">                    .toUri();</span>
+
+<span class="fc" id="L53">            log.debug(&quot;Calling Open-Meteo API: {}&quot;, uri);</span>
+            
+            // Make the API call
+<span class="fc" id="L56">            return webClient.get()</span>
+<span class="fc" id="L57">                    .uri(uri)</span>
+<span class="fc" id="L58">                    .retrieve()</span>
+<span class="fc" id="L59">                    .bodyToMono(OpenMeteoResponse.class)</span>
+<span class="fc" id="L60">                    .onErrorResume(e -&gt; {</span>
+<span class="nc" id="L61">                        log.error(&quot;Error calling Open-Meteo API for city: &quot; + city, e);</span>
+<span class="nc" id="L62">                        return Mono.error(new ExternalServiceException(&quot;Error fetching weather data: &quot; + e.getMessage()));</span>
+                    })
+<span class="fc" id="L64">                    .block();</span>
+                    
+<span class="nc" id="L66">        } catch (Exception e) {</span>
+<span class="nc" id="L67">            log.error(&quot;Error in getSunForecast for city: &quot; + city, e);</span>
+<span class="nc" id="L68">            throw new ExternalServiceException(&quot;Error processing weather data: &quot; + e.getMessage(), e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ForecastDescriptionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sunrise-sunset-forecast</a> &gt; <a href="index.source.html" class="el_package">com.example.sunrisesunsetforecast.service</a> &gt; <span class="el_source">ForecastDescriptionService.java</span></div><h1>ForecastDescriptionService.java</h1><pre class="source lang-java linenums">package com.example.sunrisesunsetforecast.service;
+
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+<span class="fc" id="L11">@Slf4j</span>
+@Service
+<span class="nc" id="L13">@RequiredArgsConstructor</span>
+public class ForecastDescriptionService {
+
+    private final ChatLanguageModel chatLanguageModel;
+
+    public String generateForecastDescription(String location, LocalDate date, 
+                                           LocalTime sunrise, LocalTime sunset, 
+                                           double temperature, String weatherCondition) {
+        
+<span class="nc" id="L22">        String prompt = String.format(&quot;&quot;&quot;</span>
+            You are a friendly weather assistant. Generate a short, engaging weather forecast description.
+            
+            Location: %s
+            Date: %s
+            Sunrise: %s
+            Sunset: %s
+            Temperature: %.1f°C
+            Conditions: %s
+            
+            Please provide a 2-3 sentence description that's:
+            - Conversational and friendly
+            - Includes an interesting fact or tip about the day
+            - Mentions any notable weather conditions
+            - Keeps it positive and engaging
+            
+            Format the response as plain text, no markdown or special formatting.
+<span class="nc" id="L39">            &quot;&quot;&quot;, location, date, sunrise, sunset, temperature, weatherCondition);</span>
+            
+        try {
+<span class="nc" id="L42">            return chatLanguageModel.generate(prompt).trim();</span>
+<span class="nc" id="L43">        } catch (Exception e) {</span>
+<span class="nc" id="L44">            log.error(&quot;Error generating forecast description with OpenRouter&quot;, e);</span>
+<span class="nc" id="L45">            return String.format(&quot;In %s, the sun will rise at %s and set at %s. &quot; +</span>
+                              &quot;Expect %s with temperatures around %.1f°C. Have a wonderful day!&quot;,
+<span class="nc" id="L47">                    location, sunrise, sunset, weatherCondition.toLowerCase(), temperature);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

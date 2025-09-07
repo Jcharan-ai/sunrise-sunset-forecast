@@ -1,0 +1,17 @@
+spring:
+  main:
+    web-application-type: none  # Disable web server for tests
+
+# Disable caching for tests
+spring.cache.type: none
+
+# Test configuration for Open-Meteo API
+openmeteo:
+  api:
+    base-url: http://test.open-meteo.com/v1/forecast
+
+# Test configuration for geocoding service
+geocoding:
+  user-agent: TestUserAgent
+  api:
+    base-url: http://test.nominatim.openstreetmap.org

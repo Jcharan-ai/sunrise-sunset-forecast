@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NominatimGeocodingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sunrise-sunset-forecast</a> &gt; <a href="index.source.html" class="el_package">com.example.sunrisesunsetforecast.service.impl</a> &gt; <span class="el_source">NominatimGeocodingService.java</span></div><h1>NominatimGeocodingService.java</h1><pre class="source lang-java linenums">package com.example.sunrisesunsetforecast.service.impl;
+
+import com.example.sunrisesunsetforecast.exception.ExternalServiceException;
+import com.example.sunrisesunsetforecast.model.Coordinates;
+import com.example.sunrisesunsetforecast.service.GeocodingService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
+
+<span class="fc" id="L18">@Slf4j</span>
+@Service
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+public class NominatimGeocodingService implements GeocodingService {
+
+    @Value(&quot;${geocoding.api.base-url:https://nominatim.openstreetmap.org}&quot;)
+    private String baseUrl;
+
+    @Value(&quot;${geocoding.user-agent:SunriseSunsetForecast/1.0}&quot;)
+    private String userAgent;
+
+    private final WebClient webClient;
+
+    @Override
+    @Cacheable(value = &quot;cityCoordinates&quot;, key = &quot;#city.toLowerCase()&quot;)
+    public Coordinates getCoordinates(String city) {
+<span class="nc" id="L34">        log.info(&quot;Looking up coordinates for city: {}&quot;, city);</span>
+        
+        try {
+<span class="nc" id="L37">            return webClient.get()</span>
+<span class="nc" id="L38">                    .uri(uriBuilder -&gt; uriBuilder</span>
+<span class="nc" id="L39">                            .scheme(&quot;https&quot;)</span>
+<span class="nc" id="L40">                            .host(&quot;nominatim.openstreetmap.org&quot;)</span>
+<span class="nc" id="L41">                            .path(&quot;/search&quot;)</span>
+<span class="nc" id="L42">                            .queryParam(&quot;q&quot;, city)</span>
+<span class="nc" id="L43">                            .queryParam(&quot;format&quot;, &quot;json&quot;)</span>
+<span class="nc" id="L44">                            .queryParam(&quot;limit&quot;, 1)</span>
+<span class="nc" id="L45">                            .build())</span>
+<span class="nc" id="L46">                    .accept(MediaType.APPLICATION_JSON)</span>
+<span class="nc" id="L47">                    .header(&quot;User-Agent&quot;, userAgent)</span>
+<span class="nc" id="L48">                    .retrieve()</span>
+<span class="nc" id="L49">                    .bodyToMono(List.class)</span>
+<span class="nc" id="L50">                    .flatMap(response -&gt; {</span>
+<span class="nc bnc" id="L51" title="All 4 branches missed.">                        if (response == null || response.isEmpty()) {</span>
+<span class="nc" id="L52">                            return Mono.error(new ExternalServiceException(&quot;No coordinates found for city: &quot; + city));</span>
+                        }
+                        
+                        try {
+<span class="nc" id="L56">                            Map&lt;String, Object&gt; location = (Map&lt;String, Object&gt;) response.get(0);</span>
+<span class="nc" id="L57">                            double lat = Double.parseDouble(location.get(&quot;lat&quot;).toString());</span>
+<span class="nc" id="L58">                            double lon = Double.parseDouble(location.get(&quot;lon&quot;).toString());</span>
+<span class="nc" id="L59">                            return Mono.just(new Coordinates(lat, lon));</span>
+<span class="nc" id="L60">                        } catch (Exception e) {</span>
+<span class="nc" id="L61">                            log.error(&quot;Error parsing geocoding response for city: &quot; + city, e);</span>
+<span class="nc" id="L62">                            return Mono.error(new ExternalServiceException(&quot;Error parsing geocoding response&quot;));</span>
+                        }
+                    })
+<span class="nc" id="L65">                    .onErrorResume(e -&gt; {</span>
+<span class="nc" id="L66">                        log.error(&quot;Error in geocoding service for city: &quot; + city, e);</span>
+<span class="nc" id="L67">                        return Mono.error(new ExternalServiceException(&quot;Error getting coordinates: &quot; + e.getMessage()));</span>
+                    })
+<span class="nc" id="L69">                    .block();</span>
+                    
+<span class="nc" id="L71">        } catch (Exception e) {</span>
+<span class="nc" id="L72">            log.error(&quot;Unexpected error in getCoordinates for city: &quot; + city, e);</span>
+<span class="nc" id="L73">            throw new ExternalServiceException(&quot;Failed to get coordinates: &quot; + e.getMessage(), e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
